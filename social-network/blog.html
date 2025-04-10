@@ -1,0 +1,213 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog del Usuario</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Quill.js -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <style>
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* Forzar texto negro en el editor */
+        .ql-editor {
+            color: #000 !important;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 to-blue-900 min-h-screen text-white">
+    <div class="container mx-auto px-4">
+        <!-- Navbar -->
+        <nav class="glass-effect fixed top-0 left-0 right-0 z-50">
+            <div class="container mx-auto px-4">
+                <div class="flex items-center justify-between h-16">
+                    <h1 class="text-2xl font-bold gradient-text">
+                        <i class="fas fa-blog mr-2"></i>
+                        Blog del Usuario
+                    </h1>
+                    <a href="index.html" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Volver
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <main class="mt-24 pb-12">
+            <article class="glass-effect p-8 rounded-xl">
+                <!-- Blog Title -->
+                <h2 class="text-3xl font-bold mb-4 gradient-text" id="blogTitle">Mi Primer Blog</h2>
+                
+                <!-- View Mode: Se muestra el blog de ejemplo -->
+                <div id="viewMode">
+                    <div id="blogContent" class="mb-6 text-gray-200">
+                        <p class="mb-4">¡Bienvenido a mi blog! Este es un ejemplo de contenido inicial.</p>
+                        <p class="mb-4">Puedes editar este contenido ingresando tu clave de propietario.</p>
+                        <ul class="list-disc pl-6">
+                            <li>Comparte tus ideas</li>
+                            <li>Agrega imágenes y formatos</li>
+                            <li>Personaliza tu contenido</li>
+                        </ul>
+                        <!-- Ejemplo de imagen incluida en el blog -->
+                        <img src="https://via.placeholder.com/350x150" alt="Ejemplo de imagen" class="mt-4 rounded">
+                    </div>
+                    
+                    <!-- Sección de autenticación para modificar si es el propietario -->
+                    <div id="authContainer" class="mt-6">
+                        <label for="password" class="block mb-2 text-gray-300">Clave de Propietario:</label>
+                        <div class="flex gap-2">
+                            <input type="password" id="password" 
+                                   class="flex-1 p-2 rounded bg-gray-800 border border-gray-700 focus:border-blue-500 focus:outline-none" 
+                                   placeholder="Ingresa tu clave">
+                            <button id="authenticate" 
+                                    class="px-4 py-2 rounded bg-gray-600 hover:bg-gray-700 transition-colors">
+                                <i class="fas fa-lock-open mr-2"></i>
+                                Editar Blog
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Mode: Para modificar el blog, con texto en negro -->
+                <div id="editMode" class="hidden">
+                    <div class="mb-4">
+                        <input type="text" id="blog-title" 
+                               class="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:border-blue-500 focus:outline-none" 
+                               value="Mi Primer Blog">
+                    </div>
+                    <div id="editor" class="mb-6 bg-white rounded shadow-lg" style="height: 400px;"></div>
+                    <div class="flex justify-end gap-2">
+                        <button id="saveDraft" class="px-4 py-2 rounded bg-gray-600 hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>
+                            Guardar Borrador
+                        </button>
+                        <button id="submitBlog" class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Publicar Cambios
+                        </button>
+                    </div>
+                </div>
+            </article>
+        </main>
+    </div>
+
+    <!-- Se carga Quill.js -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script>
+        // Inicializar editor Quill con texto en negro (configuración heredada por el CSS)
+        const quill = new Quill('#editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['blockquote', 'code-block'],
+                    [{ 'header': 1 }, { 'header': 2 }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    ['link', 'image'],
+                    ['clean']
+                ]
+            },
+            placeholder: 'Escribe el contenido de tu blog aquí...'
+        });
+
+        // Base de datos de usuarios con clave y se incluye su WhatsApp
+        const users = [
+            { 
+                id: '1', 
+                key: 'maria123', 
+                name: 'María García',
+                // Se asume que este es el usuario que recibe la notificación vía WhatsApp, si es que corresponde a ese perfil.
+                whatsapp: '+5492664024390'
+            },
+            { 
+                id: '2', 
+                key: 'carlos123', 
+                name: 'Carlos Rodríguez',
+                whatsapp: '+5492664024390'
+            }
+        ];
+
+        // Función para inicializar con contenido predeterminado en localStorage
+        const initializeBlog = () => {
+            let defaultContent = `
+                <p class="mb-4">¡Bienvenido a mi blog! Este es un ejemplo de contenido inicial.</p>
+                <p class="mb-4">Puedes editar este contenido ingresando tu clave de propietario.</p>
+                <ul class="list-disc pl-6">
+                    <li>Comparte tus ideas</li>
+                    <li>Agrega imágenes y formatos</li>
+                    <li>Personaliza tu contenido</li>
+                </ul>
+                <img src="https://via.placeholder.com/350x150" alt="Ejemplo de imagen" class="mt-4 rounded">
+            `;
+            if (!localStorage.getItem('blogContent')) {
+                localStorage.setItem('blogContent', defaultContent);
+            }
+            document.getElementById('blogContent').innerHTML = localStorage.getItem('blogContent');
+        };
+
+        // Manejar autenticación: Si se ingresa la clave correcta, cambiar al modo edición.
+        document.getElementById('authenticate').addEventListener('click', () => {
+            const password = document.getElementById('password').value;
+            const validUser = users.find(user => user.key === password);
+            
+            if (validUser) {
+                document.getElementById('viewMode').classList.add('hidden');
+                document.getElementById('editMode').classList.remove('hidden');
+                // Cargar el contenido del blog en el editor para modificar (texto con formato)
+                quill.root.innerHTML = localStorage.getItem('blogContent');
+            } else {
+                alert('Clave incorrecta. Inténtalo de nuevo.');
+            }
+        });
+
+        // Función para enviar notificación vía WhatsApp, abriendo un enlace con contenido prellenado
+        function sendWhatsAppNotification(user, content) {
+            // Construir el mensaje a enviar (puede incluir HTML, pero WhatsApp será texto plano; por ello se recomienda convertirlo a texto o dejarlo en HTML simple)
+            const mensaje = `Blog actualizado por: ${user.name}\n\nContenido actualizado:\n${content}`;
+            const url = `https://wa.me/${user.whatsapp.replace(/\+/g, '')}?text=${encodeURIComponent(mensaje)}`;
+            // Abrir ventana de WhatsApp para enviar el mensaje (esto requiere confirmar el envío en WhatsApp)
+            window.open(url, '_blank');
+        }
+
+        // Manejar guardado y notificación al publicar cambios
+        document.getElementById('submitBlog').addEventListener('click', () => {
+            const title = document.getElementById('blog-title').value;
+            const content = quill.root.innerHTML;
+            // Guardar contenido en localStorage para persistencia
+            localStorage.setItem('blogContent', content);
+            // Actualizar el contenido en modo vista
+            document.getElementById('blogContent').innerHTML = content;
+            // Cambiar de modo edición a modo vista
+            document.getElementById('editMode').classList.add('hidden');
+            document.getElementById('viewMode').classList.remove('hidden');
+            // Enviar notificación vía WhatsApp con el contenido del blog
+            const user = users.find(u => u.key === document.getElementById('password').value);
+            if (user) {
+                sendWhatsAppNotification(user, content);
+            } else {
+                alert('No se pudo identificar al usuario para notificar.');
+            }
+            alert('¡Cambios guardados y se ha preparado el mensaje para WhatsApp!');
+            // Recargar la página para visualizar cambios si se desea
+            window.location.reload();
+        });
+
+        // Inicializar contenido del blog al cargar la página
+        window.addEventListener('load', initializeBlog);
+    </script>
+</body>
+</html>
