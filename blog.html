@@ -174,10 +174,28 @@
             }
         });
 
-        // Función para enviar notificación vía WhatsApp, abriendo un enlace con contenido prellenado
-        function sendWhatsAppNotification(user, content) {
-            // Construir el mensaje a enviar (puede incluir HTML, pero WhatsApp será texto plano; por ello se recomienda convertirlo a texto o dejarlo en HTML simple)
-            const mensaje = `Blog actualizado por: ${user.name}\n\nContenido actualizado:\n${content}`;
+        // Función auxiliar para extraer texto plano y enlaces de imágenes desde contenido HTML
+        const extractContentAndImages = (htmlContent) => {
+            const container = document.createElement('div');
+            container.innerHTML = htmlContent;
+            // Extraer texto plano
+            const text = container.textContent || container.innerText || '';
+            // Buscar todas las imágenes y extraer sus src
+            const imageElements = container.getElementsByTagName('img');
+            const images = [];
+            for (let img of imageElements) {
+                images.push(img.src);
+            }
+            return { text, images };
+        };
+
+        // Función para enviar notificación vía WhatsApp, enviando el texto tal cual se escribió y adjuntando el enlace de la imagen (si existe)
+        function sendWhatsAppNotification(user, contentHtml) {
+            const { text, images } = extractContentAndImages(contentHtml);
+            let mensaje = `Blog actualizado por: ${user.name}\n\nContenido actualizado:\n${text.trim()}`;
+            if (images.length > 0) {
+                mensaje += `\n\nImágenes: ${images.join(', ')}`;
+            }
             const url = `https://wa.me/${user.whatsapp.replace(/\+/g, '')}?text=${encodeURIComponent(mensaje)}`;
             // Abrir ventana de WhatsApp para enviar el mensaje (esto requiere confirmar el envío en WhatsApp)
             window.open(url, '_blank');
@@ -194,7 +212,7 @@
             // Cambiar de modo edición a modo vista
             document.getElementById('editMode').classList.add('hidden');
             document.getElementById('viewMode').classList.remove('hidden');
-            // Enviar notificación vía WhatsApp con el contenido del blog
+            // Enviar notificación vía WhatsApp con el contenido del blog (texto plano más enlaces de imágenes)
             const user = users.find(u => u.key === document.getElementById('password').value);
             if (user) {
                 sendWhatsAppNotification(user, content);
