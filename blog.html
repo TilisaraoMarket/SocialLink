@@ -174,53 +174,85 @@
             }
         });
 
-        // Función auxiliar para extraer texto plano y enlaces de imágenes desde contenido HTML
-        const extractContentAndImages = (htmlContent) => {
-            const container = document.createElement('div');
-            container.innerHTML = htmlContent;
-            // Extraer texto plano
-            const text = container.textContent || container.innerText || '';
-            // Buscar todas las imágenes y extraer sus src
-            const imageElements = container.getElementsByTagName('img');
-            const images = [];
-            for (let img of imageElements) {
-                images.push(img.src);
-            }
-            return { text, images };
-        };
+        // Función para procesar el contenido HTML y extraer texto formateado e imágenes
+        function processContent(contentHTML) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = contentHTML;
+            
+            // Extraer URLs de imágenes
+            const images = Array.from(tempDiv.getElementsByTagName('img'))
+                .map(img => img.src);
+            
+            // Procesar texto con formato básico
+            let formattedText = contentHTML
+                .replace(/<strong>|<b>/g, '*')  // Negritas
+                .replace(/<\/strong>|<\/b>/g, '*')
+                .replace(/<em>|<i>/g, '_')      // Cursivas
+                .replace(/<\/em>|<\/i>/g, '_')
+                .replace(/<u>/g, '_')           // Subrayado
+                .replace(/<\/u>/g, '_')
+                .replace(/<li>/g, '• ')         // Listas
+                .replace(/<br>/g, '\n')         // Saltos de línea
+                .replace(/<p>/g, '\n')          // Párrafos
+                .replace(/<h[1-6]>/g, '\n*')    // Encabezados
+                .replace(/<\/h[1-6]>/g, '*\n')
+                .replace(/<[^>]*>/g, '');       // Remover otras etiquetas HTML
+            
+            // Limpiar espacios extra y caracteres especiales
+            formattedText = formattedText
+                .replace(/\n\s*\n/g, '\n\n')
+                .trim();
+            
+            return {
+                text: formattedText,
+                images: images
+            };
+        }
 
-        // Función para enviar notificación vía WhatsApp, enviando el texto tal cual se escribió y adjuntando el enlace de la imagen (si existe)
-        function sendWhatsAppNotification(user, contentHtml) {
-            const { text, images } = extractContentAndImages(contentHtml);
-            let mensaje = `Blog actualizado por: ${user.name}\n\nContenido actualizado:\n${text.trim()}`;
-            if (images.length > 0) {
-                mensaje += `\n\nImágenes: ${images.join(', ')}`;
+        // Función para enviar notificación vía WhatsApp con texto formateado e imágenes
+        function sendWhatsAppNotification(user, contentHTML) {
+            const processed = processContent(contentHTML);
+            
+            // Construir el mensaje con el texto formateado
+            let mensaje = `Blog actualizado por: *${user.name}*\n\n`;
+            mensaje += processed.text;
+            
+            // Agregar enlaces de imágenes al final si existen
+            if (processed.images.length > 0) {
+                mensaje += '\n\n*Imágenes para agregar:*\n';
+                processed.images.forEach((img, index) => {
+                    mensaje += `${index + 1}. ${img}\n`;
+                });
             }
+            
             const url = `https://wa.me/${user.whatsapp.replace(/\+/g, '')}?text=${encodeURIComponent(mensaje)}`;
-            // Abrir ventana de WhatsApp para enviar el mensaje (esto requiere confirmar el envío en WhatsApp)
             window.open(url, '_blank');
         }
 
         // Manejar guardado y notificación al publicar cambios
         document.getElementById('submitBlog').addEventListener('click', () => {
             const title = document.getElementById('blog-title').value;
-            const content = quill.root.innerHTML;
+            const contentHTML = quill.root.innerHTML;
+            
             // Guardar contenido en localStorage para persistencia
-            localStorage.setItem('blogContent', content);
+            localStorage.setItem('blogContent', contentHTML);
+            
             // Actualizar el contenido en modo vista
-            document.getElementById('blogContent').innerHTML = content;
+            document.getElementById('blogContent').innerHTML = contentHTML;
+            
             // Cambiar de modo edición a modo vista
             document.getElementById('editMode').classList.add('hidden');
             document.getElementById('viewMode').classList.remove('hidden');
-            // Enviar notificación vía WhatsApp con el contenido del blog (texto plano más enlaces de imágenes)
+            
+            // Enviar notificación vía WhatsApp con el contenido procesado
             const user = users.find(u => u.key === document.getElementById('password').value);
             if (user) {
-                sendWhatsAppNotification(user, content);
+                sendWhatsAppNotification(user, contentHTML);
             } else {
                 alert('No se pudo identificar al usuario para notificar.');
             }
+            
             alert('¡Cambios guardados y se ha preparado el mensaje para WhatsApp!');
-            // Recargar la página para visualizar cambios si se desea
             window.location.reload();
         });
 
